@@ -3,6 +3,13 @@ package com.timmcmillan;
 public class Main {
 
     public static void main(String[] args) {
-	// write your code here
+
+
+        Draughts draughts = new Draughts();
+//
+        draughts.newGame();
+
+
+
     }
 }
