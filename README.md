@@ -1,6 +1,3 @@
 # draughts game
 
-this is the draughts game
-
--
--
+Recap of the rules
