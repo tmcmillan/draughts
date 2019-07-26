@@ -34,14 +34,15 @@ public class Draughts {
             //the piecePositions are then illustrated by drawing a representation of the board
             drawBoard(piecePositions);
 
+            int numberOfWhitePieces = 12;
+            int numberOfBlackPieces = 12;
+
             //we start with white going first
             boolean whitesTurn = true;
             String colourToMove;
 
-            // playing until the game is over (when one of the players does not have any pieces remaining
-            boolean gameOver = false;
 
-            while (!gameOver) {
+            while (numberOfWhitePieces > 0 && numberOfBlackPieces >0) {
 
                 //calls a function colourToMove, which interprets the boolean whitesTurn and returns a String, either "White" or "Black"
                 colourToMove = colourToMove(whitesTurn);
@@ -63,11 +64,42 @@ public class Draughts {
                     System.out.println("That was an invalid move, have another go");
                 }
 
-                quit = true;
+                numberOfWhitePieces = numberOfPieces(piecePositions, "White");
+                numberOfBlackPieces = numberOfPieces(piecePositions, "Black");
+            }
+            System.out.println("Game Over!");
+            boolean validInput = false;
+            while(!validInput) {
+                System.out.println("\nWould you like to play again?");
+                String playAgain = scanner.nextLine();
+                if (playAgain.toLowerCase().equals("no")) {
+                    validInput = true;
+                    quit = true;
+                } else if (playAgain.toLowerCase().equals("yes")) {
+                    validInput = true;
+                    quit = false;
+                } else {
+                    System.out.println("I'm sorry, I did not understand that.");
+                }
             }
         }
     }
 
+
+    public int numberOfPieces(Piece[][] piecePositions, String colour) {
+        int count = 0;
+
+        for (int i=0; i <8; i++) {
+            for (int j=0; j <8; j++) {
+                if(piecePositions[i][j] != null) {
+                    if(piecePositions[i][j].getPieceColour().equals(colour)) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
 
     /**
      *
@@ -234,7 +266,8 @@ public class Draughts {
      * @param moveToColumnInt the columnindex of the desired location
      * @return a boolean. True if the desired move is valid of a pawn, false if not
      */
-    public boolean isValidPawnMove (Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt, int moveToRowInt, int moveToColumnInt) {
+
+    public boolean isValidMove (Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt, int moveToRowInt, int moveToColumnInt) {
 
         //default value of isValid move is false
         // utilises methods hasFowardLeftNeighbour and hasFowardRightNeighbour. These check whether the piece to be
@@ -243,6 +276,8 @@ public class Draughts {
         boolean isValidMove = false;
         boolean hasFowardLeftNeighbour = hasFowardLeftNeighbour(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt);
         boolean hasFowardRightNeighbour = hasFowardRightNeighbour(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt);
+        boolean hasBackwardRightNeighbour = hasBackwardRightNeighbour(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt);
+        boolean hasBackwardLeftNeighbour = hasBackwardLeftNeighbour(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt);
 
         int forwardDirection;
         int leftDirection;
@@ -257,11 +292,16 @@ public class Draughts {
             leftDirection = 1;
         }
 
-        //4 possible moves for pawns. move forwardleft 1 or 2, or move forwardright 1 or 2
+        //8 possible moves for queens. move forwardleft 1 or 2, or move forwardright 1 or 2
         boolean moveForwardLeftOne = (moveToRowInt == moveFromRowInt + forwardDirection) && (moveToColumnInt == moveFromColumnInt + leftDirection);
         boolean moveForwardRightOne = (moveToRowInt == moveFromRowInt + forwardDirection) && (moveToColumnInt == moveFromColumnInt - leftDirection);
         boolean moveForwardLeftTwo = (moveToRowInt == moveFromRowInt + forwardDirection * 2) && (moveToColumnInt == moveFromColumnInt + leftDirection * 2);
         boolean moveForwardRightTwo = (moveToRowInt == moveFromRowInt + forwardDirection * 2) && (moveToColumnInt == moveFromColumnInt - leftDirection * 2);
+        boolean moveBackwardLeftOne = (moveToRowInt == moveFromRowInt - forwardDirection) && (moveToColumnInt == moveFromColumnInt + leftDirection);
+        boolean moveBackwardRightOne = (moveToRowInt == moveFromRowInt - forwardDirection) && (moveToColumnInt == moveFromColumnInt - leftDirection);
+        boolean moveBackwardLeftTwo = (moveToRowInt == moveFromRowInt - forwardDirection * 2) && (moveToColumnInt == moveFromColumnInt + leftDirection * 2);
+        boolean moveBackwardRightTwo = (moveToRowInt == moveFromRowInt - forwardDirection * 2) && (moveToColumnInt == moveFromColumnInt - leftDirection * 2);
+
 
         //if we have been given an invalid piece location or destination (e.g. outside of the board), isValidMove is false.
         if (moveFromRowInt == -1 || moveToRowInt == -1 || moveFromColumnInt < 0 || moveFromColumnInt >= 8 || moveToColumnInt < 0 || moveToColumnInt >= 8 ||
@@ -269,51 +309,119 @@ public class Draughts {
             System.out.println("invalid input");
             isValidMove = false;
         } else
-            // if the colour of the piece to be moved is not the same as the colour who's turn it is to move
-            {
-            if (!piecePositions[moveFromRowInt][moveFromColumnInt].getPieceColour().equals(colourToMove)) {
+        // if the colour of the piece to be moved is not the same as the colour who's turn it is to move
+        {
+            if (piecePositions[moveFromRowInt][moveFromColumnInt] == null) {
                 System.out.println("You cannot move your opponents piece!");
             } else if
-            // if there is no piece on the square specified to move from
-            (piecePositions[moveFromRowInt][moveFromColumnInt] == null) {
+                // if there is no piece on the square specified to move from
+            (!piecePositions[moveFromRowInt][moveFromColumnInt].getPieceColour().equals(colourToMove)) {
                 System.out.println("There's no piece to move from that square!");
             } else if (piecePositions[moveToRowInt][moveToColumnInt] != null)
-                // if the destination is not empty.
-                {
-                    System.out.println("The destination square is occupied, please try again");
-                } else
+            // if the destination is not empty.
+            {
+                System.out.println("The destination square is occupied, please try again");
+            } else
 
-                    //if the current location is valid, the appropriate colour, and the destination location is valid and empty
-                    {
-                        //there is no neighbours, the piece can move only one row and one column
-                        if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour) {
-                            if (moveToRowInt == moveFromRowInt + forwardDirection && Math.abs(moveFromColumnInt - moveToColumnInt) == 1) {
-                                isValidMove = true;
-                            }
-                        }
-                        // there is one neighbour on the left, none on the right. can either move 2 left or one right
-                        else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour) {
-                            if (moveForwardLeftTwo || moveForwardRightOne) {
-                                isValidMove = true;
-                            }
-                        }
-                        // there is no neighbour on the left, one on the right. can either move one left or 2 right
-                        else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour) {
-                            if (moveForwardLeftOne || moveForwardRightTwo) {
-                                isValidMove = true;
-                            }
-                        }
-                        // there are neighbours on both sides. Can either move 2 left or right
-                        else { // (hasFowardLeftNeighbour && hasFowardRightNeighbour) {
-                            if (moveForwardLeftTwo || moveForwardRightTwo)
-                            {
-                                isValidMove = true;
-                            }
+            //if the current location is valid, the appropriate colour, and the destination location is valid and empty
+            {
+                if (!piecePositions[moveFromRowInt][moveFromColumnInt].isAQueen()) {
+                    //there is no neighbours, the piece can move only one row and one column
+                    if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour) {
+                        if (moveToRowInt == moveFromRowInt + forwardDirection && Math.abs(moveFromColumnInt - moveToColumnInt) == 1) {
+                            isValidMove = true;
                         }
                     }
+                    // there is one neighbour on the left, none on the right. can either move 2 left or one right
+                    else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightOne) {
+                            isValidMove = true;
+                        }
                     }
-        return isValidMove;
+                    // there is no neighbour on the left, one on the right. can either move one left or 2 right
+                    else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    }
+                    // there are neighbours on both sides. Can either move 2 left or right
+                    else { // (hasFowardLeftNeighbour && hasFowardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    }
+                } //if the piece is not a pawn (i.e. it is a queen)
+                else {
+                    if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour && !hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (Math.abs(moveFromRowInt - moveToRowInt) == 1 && Math.abs(moveFromColumnInt - moveToColumnInt) == 1) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour && !hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightOne || moveBackwardLeftOne || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour && !hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightTwo || moveBackwardLeftOne || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour && hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightOne || moveBackwardLeftTwo || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour && !hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightOne || moveBackwardLeftOne || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && hasFowardRightNeighbour && !hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightTwo || moveBackwardLeftOne || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour && hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightOne || moveBackwardLeftTwo || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour && !hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightOne || moveBackwardLeftOne || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour && hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightTwo || moveBackwardLeftTwo || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour && !hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightTwo || moveBackwardLeftOne || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && !hasFowardRightNeighbour && hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightOne || moveBackwardLeftTwo || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (!hasFowardLeftNeighbour && hasFowardRightNeighbour && hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftOne || moveForwardRightTwo || moveBackwardLeftTwo || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && !hasFowardRightNeighbour && hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightOne || moveBackwardLeftTwo || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && hasFowardRightNeighbour && !hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightTwo || moveBackwardLeftOne || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && hasFowardRightNeighbour && hasBackwardLeftNeighbour && !hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightTwo || moveBackwardLeftTwo || moveBackwardRightOne) {
+                            isValidMove = true;
+                        }
+                    } else if (hasFowardLeftNeighbour && hasFowardRightNeighbour && hasBackwardLeftNeighbour && hasBackwardRightNeighbour) {
+                        if (moveForwardLeftTwo || moveForwardRightTwo || moveBackwardLeftTwo || moveBackwardRightTwo) {
+                            isValidMove = true;
+                        }
+                    }
+                }
+            }
         }
+        return isValidMove;
+    }
 
     /**
      *
@@ -403,7 +511,7 @@ public class Draughts {
      * @return a boolean. True if the piece to be moved adjacent opposing piece backward left
 
      */
-    public boolean hasBackwardLeftNeighbour(Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt, int moveToRowInt, int moveToColumnInt) {
+    public boolean hasBackwardLeftNeighbour(Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt) {
 
         int backwardDirection;
         int leftDirection;
@@ -418,12 +526,16 @@ public class Draughts {
             leftDirection = 1;
         }
 
-        if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + leftDirection] == null) {
+        if(moveFromColumnInt + leftDirection <0 || moveFromColumnInt + leftDirection >7  || moveFromRowInt + backwardDirection < 0 || moveFromRowInt + backwardDirection >7){
             hasBackwardLeftNeighbour = false;
-        } else if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + leftDirection].getPieceColour() != colourToMove) {
-            hasBackwardLeftNeighbour = true;
         } else {
-            hasBackwardLeftNeighbour = false;
+            if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + leftDirection] == null) {
+                hasBackwardLeftNeighbour = false;
+            } else if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + leftDirection].getPieceColour() != colourToMove) {
+                hasBackwardLeftNeighbour = true;
+            } else {
+                hasBackwardLeftNeighbour = false;
+            }
         }
         return hasBackwardLeftNeighbour;
     }
@@ -438,7 +550,7 @@ public class Draughts {
      * @param moveFromColumnInt the columnindex of the piece to be moved
      * @return a boolean. True if the piece to be moved adjacent opposing piece backward right
      */
-    public boolean hasBackwardRightNeighbour(Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt, int moveToRowInt, int moveToColumnInt) {
+    public boolean hasBackwardRightNeighbour(Piece[][] piecePositions, String colourToMove, int moveFromRowInt, int moveFromColumnInt) {
 
         int backwardDirection;
         int rightDirection;
@@ -453,14 +565,17 @@ public class Draughts {
             rightDirection = -1;
         }
 
-        if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + rightDirection] == null) {
+        if(moveFromColumnInt + rightDirection <0 || moveFromColumnInt + rightDirection >7  || moveFromRowInt + backwardDirection < 0 || moveFromRowInt + backwardDirection >7){
             hasBackwardRightNeighbour = false;
-        } else if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + rightDirection].getPieceColour() != colourToMove) {
-            hasBackwardRightNeighbour = true;
         } else {
-            hasBackwardRightNeighbour = false;
+            if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + rightDirection] == null) {
+                hasBackwardRightNeighbour = false;
+            } else if (piecePositions[moveFromRowInt + backwardDirection][moveFromColumnInt + rightDirection].getPieceColour() != colourToMove) {
+                hasBackwardRightNeighbour = true;
+            } else {
+                hasBackwardRightNeighbour = false;
+            }
         }
-
         return hasBackwardRightNeighbour;
     }
 
@@ -494,9 +609,7 @@ public class Draughts {
         moveFromRowInt == moveToRowInt || moveFromColumnInt == moveToColumnInt) {
         }
         else {
-            if (piecePositions[moveFromRowInt][moveFromColumnInt].isAQueen() == false) {
-                isValidMove = isValidPawnMove(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt, moveToRowInt, moveToColumnInt);
-            }
+                isValidMove = isValidMove(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt, moveToRowInt, moveToColumnInt);
 
             if (isValidMove) {
                 movePiece(piecePositions, colourToMove, moveFromRowInt, moveFromColumnInt, moveToRowInt, moveToColumnInt);
